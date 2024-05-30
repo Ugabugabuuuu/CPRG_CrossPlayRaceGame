@@ -26,4 +26,10 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/CarSelectScene.unity
     guid: 21a8b2446f822c342bab0ccbb5a98128
+  - enabled: 0
+    path: Assets/Tests/TestScene.unity
+    guid: 846e0a606da2c254baea6b00462b106e
+  - enabled: 1
+    path: Assets/Tests/MenuTest.unity
+    guid: 4f9034f0e87b4ba4c8171867a0cdd62d
   m_configObjects: {}

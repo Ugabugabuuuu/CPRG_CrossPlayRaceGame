@@ -8,23 +8,23 @@ public class CarController : NetworkBehaviour
 {
     [SerializeField] private WheelCollider frontRight;
     [SerializeField] private WheelCollider frontLeft;
-    [SerializeField] private WheelCollider backRight;
-    [SerializeField] private WheelCollider backLeft;
+    [SerializeField] public WheelCollider backRight;
+    [SerializeField] public WheelCollider backLeft;
     [SerializeField] private Transform fronRightTransform;
     [SerializeField] private Transform fronLeftTransform;
     [SerializeField] private Transform backLeftTransform;
     [SerializeField] private Transform backRightTransform;
     [SerializeField] private GameObject smokePrefab;
-    [SerializeField] private float acceleration = 1000f;
+    [SerializeField] public float acceleration = 1000f;
     [SerializeField] private float breakingForce = 5000f;
     [SerializeField] private float maxTurnAngle = 20f;
-    [SerializeField] private float maxSpeed = 240f;
+    [SerializeField] public float maxSpeed = 240f;
     private float maxBackwardSpeed = 20f;
     [SerializeField] private bool isBreaking;
     private PlayerInput playerInput;
-    private InputAction moveAction;
+    public InputAction moveAction;
     private InputAction handBreakeAction;
-    private Rigidbody rb;
+    public Rigidbody rb;
     private float accelerationInput;
     [SerializeField] private GameObject tireTrail;
     [SerializeField] private Material breakLightMaterial;
@@ -42,14 +42,24 @@ public class CarController : NetworkBehaviour
     public float slipAllowance = 0.01f;
     private WheelParticles wheelParticles;
     private int currentCheckpoint = -1;
+    public float currentAcceleration;
+    public float currentBrakeForce;
     public static void ResetStaticData()
     {
         OnAnyPlayerSpawned = null;
     }
+
+    public static bool IsOnAnyPlayerSpawnedNull()
+    {
+        return OnAnyPlayerSpawned == null;
+    }
+
     private void Start()
     {
-
         rb = GetComponent<Rigidbody>();
+        playerInput = GetComponent<PlayerInput>();
+        moveAction = playerInput.actions.FindAction("Move");
+        handBreakeAction = playerInput.actions.FindAction("HandBreak");
 
         PlayerData playerData = MultiplayerManager.Instance.GetPlayerDataFromClientId(OwnerClientId);
         playerColors.SetPlayerCarColor(MultiplayerManager.Instance.GetPlayerColor(playerData.colorId));
@@ -61,19 +71,11 @@ public class CarController : NetworkBehaviour
         InitiateParticles();
 
         if (IsOwner)
-        {
             GameInput.Instance.onRespawn += Instance_onRespawn;
-            playerInput = GetComponent<PlayerInput>();
-            moveAction = playerInput.actions.FindAction("Move");
-            handBreakeAction = playerInput.actions.FindAction("HandBreak");
-        }
     }
     private void Instance_onRespawn(object sender, EventArgs e)
     {
-        if(GameManager.Instance.IsGamePlaying())
-        {
-            Respawn();
-        }
+        Respawn();
     }
     public override void OnNetworkSpawn()
     {
@@ -84,9 +86,10 @@ public class CarController : NetworkBehaviour
         Vector3 a = new Vector3(spawnPositionList[MultiplayerManager.Instance.GetPlayerDataIndexFromClientId(OwnerClientId)].position.x,
             spawnPositionList[MultiplayerManager.Instance.GetPlayerDataIndexFromClientId(OwnerClientId)].position.y-45,
             spawnPositionList[MultiplayerManager.Instance.GetPlayerDataIndexFromClientId(OwnerClientId)].position.z);
-        GetComponent<Rigidbody>().position = a;
+        transform.position = a;
         OnAnyPlayerSpawned?.Invoke(this, EventArgs.Empty);
     }
+#if !UNITY_INCLUDE_TESTS
     private void FixedUpdate()
     {
         if (finished || !GameManager.Instance.IsGamePlaying())
@@ -94,26 +97,27 @@ public class CarController : NetworkBehaviour
             ApplyBrakes(1);
             return;
         }
-        if(IsOwner)
-        {
-            accelerationInput = moveAction.ReadValue<Vector2>().y;
+        accelerationInput = moveAction.ReadValue<Vector2>().y;
 
-            brakingInput = handBreakeAction.ReadValue<float>();
+        brakingInput = handBreakeAction.ReadValue<float>();
 
-            turnInput = moveAction.ReadValue<Vector2>().x;
+        turnInput = moveAction.ReadValue<Vector2>().x;
 
-            ApplyAcceleration(accelerationInput);
-            ApplyBrakes(brakingInput);
-            ApplySteering(turnInput);
-        }
-
+        ApplyAcceleration(accelerationInput);
+        ApplyBrakes(brakingInput);
+        ApplySteering(turnInput);
         UpdateWheels();
         CheckAndApplyWheelEffects();
     }
-    private void ApplyAcceleration(float input)
+#endif
+
+    public void ApplyAcceleration(float input)
     {
+#if !UNITY_INCLUDE_TESTS
         accelerationInput = moveAction.ReadValue<Vector2>().y;
-        float currentAcceleration = acceleration * input;
+#endif
+        currentAcceleration = acceleration * input;
+#if !UNITY_INCLUDE_TESTS
         if (input >=0)
         {
             if (rb.velocity.magnitude > maxSpeed/3.6f)
@@ -130,23 +134,28 @@ public class CarController : NetworkBehaviour
         }
             backRight.motorTorque = currentAcceleration;
             backLeft.motorTorque = currentAcceleration;
-
+#endif
     }
-    private void ApplyBrakes(float input)
+    public void ApplyBrakes(float input)
     {
-        float currentBrakeForce = breakingForce * input;
+        currentBrakeForce = breakingForce * input;
+#if !UNITY_INCLUDE_TESTS
         backLeft.brakeTorque = currentBrakeForce;
         backRight.brakeTorque = currentBrakeForce;
         frontRight.brakeTorque = currentBrakeForce * 0.5f;
         frontLeft.brakeTorque = currentBrakeForce * 0.5f;
+#endif
     }
-    private void ApplySteering(float input)
+    public float currentTurnAngle; //public for testing
+    public void ApplySteering(float input)
     {
-        float currentTurnAngle = maxTurnAngle * input;
+
+        currentTurnAngle = maxTurnAngle * input;
+#if !UNITY_INCLUDE_TESTS
         frontLeft.steerAngle = currentTurnAngle;
         frontRight.steerAngle = currentTurnAngle;
+#endif
     }
-
     private void UpdateWheels()
     {
         UpdateWheel(frontLeft, fronLeftTransform);
@@ -188,7 +197,9 @@ public class CarController : NetworkBehaviour
         frontLeft.brakeTorque = currentBrakeForce;
         frontRight.brakeTorque = currentBrakeForce;
     }
-    private bool IsBreaking(float currentSpeed, float brakingInput)
+
+    // Exposed for testing purposes
+    public bool IsBreaking(float currentSpeed, float brakingInput)
     {
         return ((currentSpeed > 0 && brakingInput < 0) || (currentSpeed < 0 && brakingInput > 0));
     }
@@ -211,7 +222,9 @@ public class CarController : NetworkBehaviour
         breakLightMaterial.DisableKeyword("_EMISSION");
         breakLightMaterial.SetColor("_EmissionColor", Color.black);
     }
-    private float CalculateSpeed(Vector3 velocity)
+
+    // Exposed for testing purposes
+    public float CalculateSpeed(Vector3 velocity)
     {
         float magnitude = velocity.magnitude;
 
@@ -236,12 +249,12 @@ public class CarController : NetworkBehaviour
 
             rb.velocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
+            transform.rotation = Quaternion.Euler(0, respawnTransform.rotation.eulerAngles.y, 0);
             Vector3 tmp = new Vector3(respawnTransform.position.x,
                 respawnTransform.position.y - 10,
                 respawnTransform.position.z);
-           
-            GetComponent<Rigidbody>().position = tmp;
-            GetComponent<Rigidbody>().rotation = Quaternion.Euler(0, respawnTransform.rotation.eulerAngles.y, 0);
+            transform.position = tmp;
+
         }
     }
 
@@ -251,7 +264,7 @@ public class CarController : NetworkBehaviour
             {
             InGameMusicManager.Instance.InvokeOnGameEnded();
             finished = true;
-            GameManager.Instance.InvokeOnFinished();
+           // PlatformUIController.Instance.InvokeOnFinished(); // disabled for tests, for manual tests use project in main branch
                 MyEventArgs tmpArgs = new MyEventArgs(OwnerClientId);
 
             FinishLineTriggerCheck.Instance.InvokeEvent(tmpArgs);
@@ -310,7 +323,6 @@ public class CarController : NetworkBehaviour
         if (wheelCollider.GetGroundHit(out wheelHit))
         {
             bool isSlipping = Mathf.Abs(wheelHit.sidewaysSlip) > slipAllowance || Mathf.Abs(wheelHit.forwardSlip) > slipAllowance;
-
             if (isSlipping)
             {
                 if (!wheelParticles.isPlaying)
@@ -333,10 +345,13 @@ public class CarController : NetworkBehaviour
     {
         return finished;
     }
+
+#if !UNITY_INCLUDE_TESTS
     private void OnDestroy()
     {
         GameInput.Instance.onRespawn -= Instance_onRespawn;
     }
+#endif
 
 }
 public class WheelParticles

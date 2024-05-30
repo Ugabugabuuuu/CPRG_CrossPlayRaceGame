@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Audio;
@@ -20,7 +21,6 @@ public class SettingsMenuController : MonoBehaviour
     [SerializeField] private GameObject resulutionContainer;
 
     private Resolution[] resolutions;
-    private List<Resolution> uniqueResolutions;
     public static SettingsMenuController LocalInstance { get; private set; }
     private void Awake()
     {
@@ -36,7 +36,6 @@ public class SettingsMenuController : MonoBehaviour
         }
         else
         {
-
             resulutionContainer.SetActive(false);
         }
 
@@ -53,26 +52,15 @@ public class SettingsMenuController : MonoBehaviour
     {
         if (Application.platform != RuntimePlatform.Android)
         {
-            Dictionary<string, Resolution> uniqueResolutionDict = new Dictionary<string, Resolution>();
             List<string> resolutionOptions = new List<string>();
-
             foreach (Resolution res in resolutions)
             {
-                string resolutionString = $"{res.width}x{res.height}";
-                if (!uniqueResolutionDict.ContainsKey(resolutionString))
-                {
-                    uniqueResolutionDict[resolutionString] = res;
-                    resolutionOptions.Add(resolutionString);
-                }
+                resolutionOptions.Add($"{res.width}x{res.height}");
             }
-
-            uniqueResolutions = new List<Resolution>(uniqueResolutionDict.Values);
-
             resolutionDropDown.ClearOptions();
             resolutionDropDown.AddOptions(resolutionOptions);
         }
     }
-
 
     private void InitializeFPSDropdown()
     {
@@ -87,8 +75,8 @@ public class SettingsMenuController : MonoBehaviour
 
     private void Start()
     {
-        LoadSettings();
-        ApplySettingsToUI();
+        LoadSettings(); 
+        ApplySettingsToUI(); 
     }
 
     private void LoadSettings()
@@ -102,7 +90,6 @@ public class SettingsMenuController : MonoBehaviour
         {
             settings = new Settings();
         }
-
         audioMixer.SetFloat("volume", settings.volume);
         audioMixerMusic.SetFloat("musicVolume", settings.musicVolume);
 
@@ -176,7 +163,7 @@ public class SettingsMenuController : MonoBehaviour
     {
         if (Application.platform != RuntimePlatform.Android)
         {
-            Resolution resolution = uniqueResolutions[resolutionIndex];
+            Resolution resolution = resolutions[resolutionIndex];
             Screen.SetResolution(resolution.width, resolution.height, Screen.fullScreen);
         }
 
@@ -189,6 +176,25 @@ public class SettingsMenuController : MonoBehaviour
         Application.targetFrameRate = fps;
         settings.targetFPS = fps;
         SaveSettings();
+    }
+
+    // Test helpers
+
+    public float GetGameVolume()
+    {
+        audioMixer.GetFloat("volume", out float value);
+        return value;
+    }
+
+    public float GetMusicVolume()
+    {
+        audioMixerMusic.GetFloat("musicVolume", out float value);
+        return value;
+    }
+
+    public bool GetFullScreen()
+    {
+        return settings.isFullScreen;
     }
 }
 

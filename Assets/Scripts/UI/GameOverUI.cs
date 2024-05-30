@@ -110,7 +110,6 @@ public class GameOverUI : MonoBehaviour
         foreach (var rd in dictRaceData.Values)
         {
             raceData.Add(rd);
-            Debug.Log("race " + rd);
         }
         Debug.Log(lobbyName);
         GameData gameData = new GameData()
@@ -127,7 +126,6 @@ public class GameOverUI : MonoBehaviour
         string jsonData = JsonUtility.ToJson(allGameData);
         PlayerPrefs.SetString("AllGameData", jsonData);
         PlayerPrefs.Save();
-        Debug.Log("Game data saved: " + jsonData);
     }
 
     private AllGameData LoadAllGameData()

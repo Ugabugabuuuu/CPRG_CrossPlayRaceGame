@@ -14,10 +14,6 @@ public class CameraController : NetworkBehaviour
         {
             carTransform = transform.parent;
         }
-        else
-        {
-          //  Debug.LogError("CameraController: Camera must be a child object of the car.");
-        }
     }
 
     void LateUpdate()

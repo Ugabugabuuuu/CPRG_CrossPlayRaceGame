@@ -35,7 +35,6 @@ public class CarColorSelectUIElement : MonoBehaviour
         }
         else
         {
-           // Debug.Log(MultiplayerManager.Instance.GetPlayerData().colorId + "did not matched  " + colorId);
             selectedGameObject.SetActive(false);
         }
     }

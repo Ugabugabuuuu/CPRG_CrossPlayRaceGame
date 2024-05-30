@@ -120,9 +120,8 @@ public class MultiplayerManager : NetworkBehaviour
 
     public void StartClient()
     {
-        Debug.Log("StartClient");
+
         OnTryingToJoinGame?.Invoke(this, EventArgs.Empty);
-        Debug.Log(OnTryingToJoinGame);
 
         NetworkManager.Singleton.OnClientDisconnectCallback += NetworkManager_Client_OnClientDisconnectCallback;
         NetworkManager.Singleton.OnClientConnectedCallback += NetworkManager_Client_OnClientConnectedCallback;
@@ -158,7 +157,6 @@ public class MultiplayerManager : NetworkBehaviour
 
     private void NetworkManager_Client_OnClientDisconnectCallback(ulong clientId)
     {
-        Debug.Log("NetworkManager_Client_OnClientDisconnectCallback");
         OnFailedToJoinGame?.Invoke(this, EventArgs.Empty);
     }
     public bool IsPlayerIndexConnected(int playerIndex)
